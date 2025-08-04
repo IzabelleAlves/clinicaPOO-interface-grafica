@@ -1,5 +1,6 @@
 package crud.clinica.model;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +11,8 @@ public class Paciente {
 	private String nome;
 	private String cpf;
 	private int quantidadeExames;
+	private String dataNascimento;
+
 
 	
 	private List<Exame> exames = new ArrayList<Exame>();
@@ -17,9 +20,10 @@ public class Paciente {
 	public Paciente() {
 	}
 	
-	public Paciente(String nome, String cpf) {
+	public Paciente(String nome, String cpf, String dataNascimento) {
 		this.nome = nome;
 		this.cpf = cpf;
+		this.dataNascimento = dataNascimento;
 	}
 
 	public Paciente(Long id, String nome, String cpf) {
@@ -66,6 +70,14 @@ public class Paciente {
 	
 	public int getQuantidadeExames() {
 	    return quantidadeExames;
+	}
+	
+	public String getDataNascimento() {
+	    return dataNascimento;
+	}
+
+	public void setDataNascimento(String dataNascimento) {
+	    this.dataNascimento = dataNascimento;
 	}
 
 	@Override

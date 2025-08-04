@@ -1,14 +1,16 @@
 package crud.clinica.view;
 
+import crud.clinica.database.DatabaseConnectionMySQL;
+import crud.clinica.database.IConnection;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-import crud.clinica.view.PacienteFormDialog;
-import crud.clinica.database.DatabaseConnectionMySQL;
-
 public class MainView extends JFrame {
     private static final long serialVersionUID = 1L;
+
+    private IConnection dbConnection;
 
     public MainView() {
         setTitle("Sistema da Clínica");
@@ -16,6 +18,8 @@ public class MainView extends JFrame {
         setSize(800, 600);
         setLocationRelativeTo(null); // Centraliza a janela
         setLayout(new BorderLayout());
+
+        dbConnection = new DatabaseConnectionMySQL(); // conexão para usar na aplicação
 
         // ---------------------
         // JMenuBar
@@ -99,40 +103,27 @@ public class MainView extends JFrame {
             case "Novo Paciente":
                 PacienteFormDialog cadastro = new PacienteFormDialog(
                     this,
-                    new DatabaseConnectionMySQL(),
-                    null // criação de novo paciente
+                    dbConnection,
+                    null
                 );
                 cadastro.setVisible(true);
                 break;
 
             case "Listar Pacientes":
-                JDialog listarPacientesDialog = new JDialog(this, "Lista de Pacientes", true);
-                listarPacientesDialog.setSize(600, 400);
-                listarPacientesDialog.setLocationRelativeTo(this);
-                listarPacientesDialog.setLayout(new BorderLayout());
-                listarPacientesDialog.add(new PacientePanel(), BorderLayout.CENTER);
-                listarPacientesDialog.setVisible(true);
-                break;
-
-            case "Listar Exames":
-                JDialog listarExamesDialog = new JDialog(this, "Lista de Exames", true);
-                listarExamesDialog.setSize(600, 400);
-                listarExamesDialog.setLocationRelativeTo(this);
-                listarExamesDialog.setLayout(new BorderLayout());
-                listarExamesDialog.add(new ExamePanel(), BorderLayout.CENTER);
-                listarExamesDialog.setVisible(true);
-                break;
-
-            case "Editar Paciente":
-                JOptionPane.showMessageDialog(this, "Janela de edição ainda não implementada");
+                abrirPacienteListDialog(false, false);
                 break;
 
             case "Localizar Paciente":
-                JOptionPane.showMessageDialog(this, "Janela de localização ainda não implementada");
+                // Por enquanto, vamos abrir a lista, futuramente filtrar por nome/cpf
+                abrirPacienteListDialog(false, false);
+                break;
+
+            case "Editar Paciente":
+                abrirPacienteListDialog(true, false); // editar habilitado
                 break;
 
             case "Excluir Paciente":
-                JOptionPane.showMessageDialog(this, "Janela de exclusão ainda não implementada");
+                abrirPacienteListDialog(false, true); // excluir habilitado
                 break;
 
             case "Novo Exame":
@@ -145,6 +136,16 @@ public class MainView extends JFrame {
             default:
                 JOptionPane.showMessageDialog(this, "Função ainda não implementada: " + titulo);
         }
+    }
+
+    /**
+     * Abre o diálogo de lista de pacientes com opção de editar e/ou excluir habilitada.
+     * @param podeEditar se o usuário poderá editar pacientes.
+     * @param podeExcluir se o usuário poderá excluir pacientes.
+     */
+    private void abrirPacienteListDialog(boolean podeEditar, boolean podeExcluir) {
+        PacienteListDialog dialog = new PacienteListDialog(this, dbConnection, podeEditar, podeExcluir);
+        dialog.setVisible(true);
     }
 
     private void confirmarSaida(ActionEvent e) {

@@ -117,7 +117,7 @@ public class PacienteDAO implements IEntityDAO<Paciente>{
 		            int totalExames = exameDAO.countByPacienteId(p.getId());
 
 		            p.setQuantidadeExames(totalExames);
-
+//		            p.setDataNascimento(rs.getString("data_nascimento"));
 		            pacientes.add(p);
 		        }
 
