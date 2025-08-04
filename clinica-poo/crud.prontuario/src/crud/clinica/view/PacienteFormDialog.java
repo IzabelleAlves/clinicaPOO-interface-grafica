@@ -63,18 +63,35 @@ public class PacienteFormDialog extends JDialog {
 
         add(formPanel, BorderLayout.CENTER);
 
+//        JPanel buttonPanel = new JPanel();
+//        btnSalvar = new JButton("Salvar");
+//        btnLimpar = new JButton("Limpar");
+//        btnSair = new JButton("Sair");
+//        buttonPanel.add(btnSalvar);
+//        buttonPanel.add(btnLimpar);
+//        buttonPanel.add(btnSair);
+        
         JPanel buttonPanel = new JPanel();
-        btnSalvar = new JButton("Salvar");
-        btnLimpar = new JButton("Limpar");
-        btnSair = new JButton("Sair");
+
+        btnSalvar = new JButton(paciente == null ? "Salvar" : "Atualizar");
+        btnSalvar.addActionListener(this::salvar);
         buttonPanel.add(btnSalvar);
-        buttonPanel.add(btnLimpar);
+
+        if (paciente == null) {
+            btnLimpar = new JButton("Limpar");
+            btnLimpar.addActionListener(e -> limparCampos());
+            buttonPanel.add(btnLimpar);
+        }
+
+        btnSair = new JButton("Sair");
+        btnSair.addActionListener(e -> dispose());
         buttonPanel.add(btnSair);
+
 
         add(buttonPanel, BorderLayout.SOUTH);
 
         btnSalvar.addActionListener(this::salvar);
-        btnLimpar.addActionListener(e -> limparCampos());
+//        btnLimpar.addActionListener(e -> limparCampos());
         btnSair.addActionListener(e -> dispose());
         
         if (paciente != null) {

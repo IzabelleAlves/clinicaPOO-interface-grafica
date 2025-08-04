@@ -30,9 +30,10 @@ public class PacienteDAO implements IEntityDAO<Paciente>{
 	    }
 	    try {
 	        PreparedStatement pstm = conn.getConnection()
-	            .prepareStatement("INSERT INTO PACIENTES (nome, cpf) VALUES (?, ?);");
+	            .prepareStatement("INSERT INTO PACIENTES (nome, cpf, data_nascimento) VALUES (?, ?, ?);");
 	        pstm.setString(1, t.getNome());
 	        pstm.setString(2, t.getCpf());
+	        pstm.setString(3, t.getDataNascimento());
 	        pstm.execute();
 	        pstm.close();
 	    } catch (SQLException e) {
@@ -117,7 +118,7 @@ public class PacienteDAO implements IEntityDAO<Paciente>{
 		            int totalExames = exameDAO.countByPacienteId(p.getId());
 
 		            p.setQuantidadeExames(totalExames);
-//		            p.setDataNascimento(rs.getString("data_nascimento"));
+		            p.setDataNascimento(rs.getString("data_nascimento"));
 		            pacientes.add(p);
 		        }
 

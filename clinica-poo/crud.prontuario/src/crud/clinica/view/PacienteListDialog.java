@@ -11,121 +11,113 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 
 public class PacienteListDialog extends JDialog {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    private IConnection dbConnection;
-    private PacienteDAO pacienteDAO;
-    private JTable table;
-    private DefaultTableModel tableModel;
+	private IConnection dbConnection;
+	private PacienteDAO pacienteDAO;
+	private JTable table;
+	private DefaultTableModel tableModel;
 
-    private boolean podeEditar;
-    private boolean podeExcluir;
+	private boolean podeEditar;
+	private boolean podeExcluir;
 
-    public PacienteListDialog(Window parent, IConnection dbConnection, boolean podeEditar, boolean podeExcluir) {
-        super(parent, "Lista de Pacientes", ModalityType.APPLICATION_MODAL);
-        this.dbConnection = dbConnection;
-        this.pacienteDAO = new PacienteDAO(dbConnection);
+	public PacienteListDialog(Window parent, IConnection dbConnection, boolean podeEditar, boolean podeExcluir) {
+		super(parent, "Lista de Pacientes", ModalityType.APPLICATION_MODAL);
+		this.dbConnection = dbConnection;
+		this.pacienteDAO = new PacienteDAO(dbConnection);
 
-        this.podeEditar = podeEditar;
-        this.podeExcluir = podeExcluir;
+		this.podeEditar = podeEditar;
+		this.podeExcluir = podeExcluir;
 
-        setSize(700, 400);
-        setLocationRelativeTo(parent);
-        setLayout(new BorderLayout());
+		setSize(700, 400);
+		setLocationRelativeTo(parent);
+		setLayout(new BorderLayout());
 
-        // Modelo da tabela com colunas ID, Nome e CPF
-        tableModel = new DefaultTableModel(new Object[]{"ID", "Nome", "CPF", "Data de Nascimento"}, 0) {
-            private static final long serialVersionUID = 1L;
+		// Modelo da tabela com colunas ID, Nome e CPF
+		tableModel = new DefaultTableModel(new Object[] { "ID", "Nome", "CPF", "Data de Nascimento" }, 0) {
+			private static final long serialVersionUID = 1L;
 
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Tabela somente leitura
-            }
-        };
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false; // Tabela somente leitura
+			}
+		};
 
-        table = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, BorderLayout.CENTER);
+		table = new JTable(tableModel);
+		JScrollPane scrollPane = new JScrollPane(table);
+		add(scrollPane, BorderLayout.CENTER);
 
-        // Painel dos botões
-        JPanel buttonPanel = new JPanel();
+		// Painel dos botões
+		JPanel buttonPanel = new JPanel();
 
-        JButton btnEditar = new JButton("Editar");
-        JButton btnExcluir = new JButton("Excluir");
-        JButton btnFechar = new JButton("Fechar");
+		JButton btnEditar = new JButton("Editar");
+		JButton btnExcluir = new JButton("Excluir");
+		JButton btnFechar = new JButton("Fechar");
 
-        // Adiciona botões conforme permissão
-        if (podeEditar) {
-            buttonPanel.add(btnEditar);
-            btnEditar.addActionListener((ActionEvent e) -> editarPaciente());
-        }
-        if (podeExcluir) {
-            buttonPanel.add(btnExcluir);
-            btnExcluir.addActionListener((ActionEvent e) -> excluirPaciente());
-        }
-        buttonPanel.add(btnFechar);
-        btnFechar.addActionListener((ActionEvent e) -> dispose());
+		// Adiciona botões conforme permissão
+		if (podeEditar) {
+			buttonPanel.add(btnEditar);
+			btnEditar.addActionListener((ActionEvent e) -> editarPaciente());
+		}
+		if (podeExcluir) {
+			buttonPanel.add(btnExcluir);
+			btnExcluir.addActionListener((ActionEvent e) -> excluirPaciente());
+		}
+		buttonPanel.add(btnFechar);
+		btnFechar.addActionListener((ActionEvent e) -> dispose());
 
-        add(buttonPanel, BorderLayout.SOUTH);
+		add(buttonPanel, BorderLayout.SOUTH);
 
-        // Carrega pacientes na tabela
-        carregarPacientes();
-    }
+		// Carrega pacientes na tabela
+		carregarPacientes();
+	}
 
-    private void carregarPacientes() {
-        List<Paciente> pacientes = pacienteDAO.findAll();
-        tableModel.setRowCount(0); // limpa tabela
-        for (Paciente p : pacientes) {
-            tableModel.addRow(new Object[]{p.getId(), p.getNome(), p.getCpf(), p.getDataNascimento()});
-        }
-    }
+	private void carregarPacientes() {
+		List<Paciente> pacientes = pacienteDAO.findAll();
+		tableModel.setRowCount(0); // limpa tabela
+		for (Paciente p : pacientes) {
+			tableModel.addRow(new Object[] { p.getId(), p.getNome(), p.getCpf(), p.getDataNascimento() });
+		}
+	}
 
-    private void editarPaciente() {
-        int linhaSelecionada = table.getSelectedRow();
-        if (linhaSelecionada == -1) {
-            JOptionPane.showMessageDialog(this, "Selecione um paciente para editar.");
-            return;
-        }
-        Long id = (Long) tableModel.getValueAt(linhaSelecionada, 0);
-        Paciente selecionado = pacienteDAO.findById(id);
-        if (selecionado == null) {
-            JOptionPane.showMessageDialog(this, "Paciente não encontrado.");
-            return;
-        }
+	private void editarPaciente() {
+		int linhaSelecionada = table.getSelectedRow();
+		if (linhaSelecionada == -1) {
+			JOptionPane.showMessageDialog(this, "Selecione um paciente para editar.");
+			return;
+		}
+		Long id = (Long) tableModel.getValueAt(linhaSelecionada, 0);
+		Paciente selecionado = pacienteDAO.findById(id);
+		if (selecionado == null) {
+			JOptionPane.showMessageDialog(this, "Paciente não encontrado.");
+			return;
+		}
 
-        PacienteFormDialog form = new PacienteFormDialog(
-            this,
-            dbConnection,
-            selecionado
-        );
-        form.setVisible(true);
+		PacienteFormDialog form = new PacienteFormDialog(this, dbConnection, selecionado);
+		form.setVisible(true);
 
-        // Recarrega a tabela depois de editar
-        carregarPacientes();
-    }
+		// Recarrega a tabela depois de editar
+		carregarPacientes();
+	}
 
-    private void excluirPaciente() {
-        int linhaSelecionada = table.getSelectedRow();
-        if (linhaSelecionada == -1) {
-            JOptionPane.showMessageDialog(this, "Selecione um paciente para excluir.");
-            return;
-        }
-        int confirmar = JOptionPane.showConfirmDialog(
-            this,
-            "Deseja realmente excluir este paciente?",
-            "Confirmar exclusão",
-            JOptionPane.YES_NO_OPTION
-        );
+	private void excluirPaciente() {
+		int linhaSelecionada = table.getSelectedRow();
+		if (linhaSelecionada == -1) {
+			JOptionPane.showMessageDialog(this, "Selecione um paciente para excluir.");
+			return;
+		}
+		int confirmar = JOptionPane.showConfirmDialog(this, "Deseja realmente excluir este paciente?",
+				"Confirmar exclusão", JOptionPane.YES_NO_OPTION);
 
-        if (confirmar == JOptionPane.YES_OPTION) {
-            Long id = (Long) tableModel.getValueAt(linhaSelecionada, 0);
-            Paciente selecionado = pacienteDAO.findById(id);
-            if (selecionado != null) {
-                pacienteDAO.delete(selecionado);
-                carregarPacientes();
-            } else {
-                JOptionPane.showMessageDialog(this, "Paciente não encontrado.");
-            }
-        }
-    }
+		if (confirmar == JOptionPane.YES_OPTION) {
+			Long id = (Long) tableModel.getValueAt(linhaSelecionada, 0);
+			Paciente selecionado = pacienteDAO.findById(id);
+			if (selecionado != null) {
+				pacienteDAO.delete(selecionado);
+				carregarPacientes();
+			} else {
+				JOptionPane.showMessageDialog(this, "Paciente não encontrado.");
+			}
+		}
+	}
 }

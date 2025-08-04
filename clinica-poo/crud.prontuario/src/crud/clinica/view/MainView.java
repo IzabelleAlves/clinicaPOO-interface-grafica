@@ -114,9 +114,10 @@ public class MainView extends JFrame {
                 break;
 
             case "Localizar Paciente":
-                // Por enquanto, vamos abrir a lista, futuramente filtrar por nome/cpf
-                abrirPacienteListDialog(false, false);
+                PacienteLocalizacaoDialog localizar = new PacienteLocalizacaoDialog(this, dbConnection);
+                localizar.setVisible(true);
                 break;
+
 
             case "Editar Paciente":
                 abrirPacienteListDialog(true, false); // editar habilitado
