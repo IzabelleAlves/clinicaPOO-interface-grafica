@@ -1,6 +1,6 @@
 package crud.clinica.dao;
 
-import java.sql.Date;
+import java.sql.Timestamp;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,188 +14,168 @@ import crud.clinica.exception.CPFJaExisteException;
 import crud.clinica.model.Exame;
 import crud.clinica.model.Paciente;
 
+public class PacienteDAO implements IEntityDAO<Paciente> {
 
-public class PacienteDAO implements IEntityDAO<Paciente>{
+    private IConnection conn;
 
-	private IConnection conn;
-	
-	public PacienteDAO(IConnection connection) {
-		this.conn = connection;
-		this.exameDAO = new ExameDAO(connection);
-	}
-	
-	private ExameDAO exameDAO;
+    public PacienteDAO(IConnection connection) {
+        this.conn = connection;
+        this.exameDAO = new ExameDAO(connection);
+    }
 
-	public void create(Paciente t) throws SQLException, CPFJaExisteException {
-		
-		List<Paciente> pacientes = (List<Paciente>) findByCPF(t.getCpf());
-		if (!pacientes.isEmpty()) {
-		    throw new CPFJaExisteException("Já existe um paciente com o CPF informado. Digite outro CPF.");
-		}
-	    
-	    Date dataNascimento = Date.valueOf(t.getDataNascimento());
-	    
-	    try {
-	        PreparedStatement pstm = conn.getConnection()
-	            .prepareStatement("INSERT INTO PACIENTES (nome, cpf, data_nascimento) VALUES (?, ?, ?);");
-	        pstm.setString(1, t.getNome());
-	        pstm.setString(2, t.getCpf());
-	        pstm.setDate(3, dataNascimento);
-	        pstm.execute();
-	        pstm.close();
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	        throw e; 
-	    }
-	}
+    private ExameDAO exameDAO;
 
+    public void create(Paciente t) throws SQLException, CPFJaExisteException {
+        List<Paciente> pacientes = findByCPF(t.getCpf());
+        if (!pacientes.isEmpty()) {
+            throw new CPFJaExisteException("Já existe um paciente com o CPF informado. Digite outro CPF.");
+        }
 
-	@Override
-	public Paciente findById(Long id) {
-	    Paciente p = null;
+        Timestamp dataNascimento = Timestamp.valueOf(t.getDataNascimento());
 
-	    try {
-	        PreparedStatement pstm = conn.getConnection()
-	                .prepareStatement("SELECT * FROM PACIENTES WHERE ID = ?;");
-	        pstm.setLong(1, id);
-	        ResultSet rs = pstm.executeQuery();
+        try {
+            PreparedStatement pstm = conn.getConnection()
+                    .prepareStatement("INSERT INTO PACIENTES (nome, cpf, data_nascimento) VALUES (?, ?, ?);");
+            pstm.setString(1, t.getNome());
+            pstm.setString(2, t.getCpf());
+            pstm.setTimestamp(3, dataNascimento);
+            pstm.execute();
+            pstm.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
-	        if (rs.next()) {
-	            p = new Paciente(rs.getLong("id"), rs.getString("nome"), rs.getString("cpf") , rs.getDate("data_nascimento"));
+    @Override
+    public Paciente findById(Long id) {
+        Paciente p = null;
 
-	            List<Exame> examesDoPaciente = exameDAO.findByPacienteId(p.getId());
-	            p.setExames(examesDoPaciente);
-	        }
+        try {
+            PreparedStatement pstm = conn.getConnection()
+                    .prepareStatement("SELECT * FROM PACIENTES WHERE ID = ?;");
+            pstm.setLong(1, id);
+            ResultSet rs = pstm.executeQuery();
 
-	        pstm.close();
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	    }
+            if (rs.next()) {
+                p = new Paciente(
+                    rs.getLong("id"),
+                    rs.getString("nome"),
+                    rs.getString("cpf"),
+                    rs.getTimestamp("data_nascimento").toLocalDateTime()
+                );
 
-	    return p;
-	}
-	
-	public List<Paciente> findByCPF(String cpf) {
-	    List<Paciente> lista = new ArrayList<>();
-	    String sql = "SELECT * FROM PACIENTES WHERE cpf LIKE ?";
+                List<Exame> examesDoPaciente = exameDAO.findByPacienteId(p.getId());
+                p.setExames(examesDoPaciente);
+            }
 
-	    try (PreparedStatement pstm = conn.getConnection().prepareStatement(sql)) {
-	        pstm.setString(1, cpf + "%");
+            pstm.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-	        try (ResultSet rs = pstm.executeQuery()) {
-	            while (rs.next()) {
-	                Paciente paciente = new Paciente();
-	                paciente.setId(rs.getLong("id"));
-	                paciente.setNome(rs.getString("nome"));
-	                paciente.setCpf(rs.getString("cpf"));
-	                paciente.setDataNascimento(rs.getDate("data_nascimento").toLocalDate());
+        return p;
+    }
 
-	                int qtdExames = exameDAO.countByPacienteId(paciente.getId());
-	                paciente.setQuantidadeExames(qtdExames);
+    public List<Paciente> findByCPF(String cpf) {
+        List<Paciente> lista = new ArrayList<>();
+        String sql = "SELECT * FROM PACIENTES WHERE cpf LIKE ?";
 
-	                lista.add(paciente);
-	            }
-	        }
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	        // Aqui opcionalmente retorne lista vazia ou lance exceção customizada
-	    }
+        try (PreparedStatement pstm = conn.getConnection().prepareStatement(sql)) {
+            pstm.setString(1, cpf + "%");
 
-	    return lista;  // Nunca retorna null
-	}
+            try (ResultSet rs = pstm.executeQuery()) {
+                while (rs.next()) {
+                    Paciente paciente = new Paciente();
+                    paciente.setId(rs.getLong("id"));
+                    paciente.setNome(rs.getString("nome"));
+                    paciente.setCpf(rs.getString("cpf"));
+                    paciente.setDataNascimento(rs.getTimestamp("data_nascimento").toLocalDateTime());
 
+                    int qtdExames = exameDAO.countByPacienteId(paciente.getId());
+                    paciente.setQuantidadeExames(qtdExames);
 
-	
-	@Override
-	public void delete(Paciente t) {
+                    lista.add(paciente);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-		try {
-			PreparedStatement pstm = conn.getConnection()
-					.prepareStatement("DELETE FROM PACIENTES WHERE ID = ?;");
-			pstm.setLong(1, t.getId());
-			pstm.execute();
-			pstm.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
+        return lista;
+    }
 
-	@Override
-	public List<Paciente> findAll() {
-		 List<Paciente> pacientes = new ArrayList<>();
+    @Override
+    public void delete(Paciente t) {
+        try {
+            PreparedStatement pstm = conn.getConnection()
+                    .prepareStatement("DELETE FROM PACIENTES WHERE ID = ?;");
+            pstm.setLong(1, t.getId());
+            pstm.execute();
+            pstm.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
-		    try {
-		        PreparedStatement pstm = conn.getConnection()
-		                .prepareStatement("SELECT * FROM PACIENTES;");
-		        ResultSet rs = pstm.executeQuery();
+    @Override
+    public List<Paciente> findAll() {
+        List<Paciente> pacientes = new ArrayList<>();
 
-		        while (rs.next()) {
-		            Paciente p = new Paciente(rs.getLong("id"), rs.getString("nome"), rs.getString("cpf"), rs.getDate("data_nascimento"));
+        try {
+            PreparedStatement pstm = conn.getConnection()
+                    .prepareStatement("SELECT * FROM PACIENTES;");
+            ResultSet rs = pstm.executeQuery();
 
-		            int totalExames = exameDAO.countByPacienteId(p.getId());
+            while (rs.next()) {
+                Paciente p = new Paciente(
+                    rs.getLong("id"),
+                    rs.getString("nome"),
+                    rs.getString("cpf"),
+                    rs.getTimestamp("data_nascimento").toLocalDateTime()
+                );
 
-		            p.setQuantidadeExames(totalExames);
-//		            p.setDataNascimento(rs.getDate("data_nascimento"));
-		            pacientes.add(p);
-		        }
+                int totalExames = exameDAO.countByPacienteId(p.getId());
+                p.setQuantidadeExames(totalExames);
 
-		        pstm.close();
-		    } catch (SQLException e) {
-		        e.printStackTrace();
-		    }
+                pacientes.add(p);
+            }
 
-		    if (pacientes.isEmpty()) {
-		        System.out.println("Nenhum paciente encontrado.");
-		    }
+            pstm.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-		    return pacientes;
-	}
+        if (pacientes.isEmpty()) {
+            System.out.println("Nenhum paciente encontrado.");
+        }
 
+        return pacientes;
+    }
 
+    @Override
+    public void update(Paciente t) throws SQLException, CPFJaExisteException {
+        List<Paciente> pacienteExistente = findByCPF(t.getCpf());
 
-//	@Override
-//	public void update(Paciente t) throws SQLException, CPFJaExisteException {
-//		List<Paciente> pacienteExistente = findByCPF(t.getCpf());
-//		
-//		if (pacienteExistente != null && !((Exame) pacienteExistente).getId().equals(t.getId())) {
-//	        throw new CPFJaExisteException("Já existe um paciente com o CPF informado. Digite outro CPF");
-//	    }
-//		
-//	    PreparedStatement pstm = conn.getConnection()
-//	        .prepareStatement("UPDATE PACIENTES SET NOME = ?, CPF = ? WHERE ID = ?;");
-//	    pstm.setString(1, t.getNome());
-//	    pstm.setString(2, t.getCpf());
-//	    pstm.setLong(3, t.getId());
-//	    pstm.execute();
-//	    pstm.close();
-//	}
-	
-	@Override
-	public void update(Paciente t) throws SQLException, CPFJaExisteException {
-		Paciente pacienteExistente = (Paciente) findByCPF(t.getCpf());
+        if (!pacienteExistente.isEmpty() && !pacienteExistente.get(0).getId().equals(t.getId())) {
+            throw new CPFJaExisteException("Já existe um paciente com o CPF informado. Digite outro CPF");
+        }
 
-		if (pacienteExistente != null && !pacienteExistente.getId().equals(t.getId())) {
-		    throw new CPFJaExisteException("Já existe um paciente com o CPF informado. Digite outro CPF");
-		}
-	    PreparedStatement pstm = conn.getConnection()
-	        .prepareStatement("UPDATE PACIENTES SET NOME = ?, CPF = ?, data_nascimento = ? WHERE ID = ?;");
-	    pstm.setString(1, t.getNome());
-	    pstm.setString(2, t.getCpf());
-	    pstm.setDate(3, java.sql.Date.valueOf(t.getDataNascimento()));
-	    pstm.setLong(4, t.getId());
-	    pstm.execute();
-	    pstm.close();
-	}
+        PreparedStatement pstm = conn.getConnection()
+                .prepareStatement("UPDATE PACIENTES SET NOME = ?, CPF = ?, data_nascimento = ? WHERE ID = ?;");
+        pstm.setString(1, t.getNome());
+        pstm.setString(2, t.getCpf());
+        pstm.setTimestamp(3, Timestamp.valueOf(t.getDataNascimento()));
+        pstm.setLong(4, t.getId());
+        pstm.execute();
+        pstm.close();
+    }
 
+    public ExameDAO getExameDAO() {
+        return exameDAO;
+    }
 
-
-	public ExameDAO getExameDAO() {
-		return exameDAO;
-	}
-
-
-	public void setExameDAO(ExameDAO exameDAO) {
-		this.exameDAO = exameDAO;
-	}
-
+    public void setExameDAO(ExameDAO exameDAO) {
+        this.exameDAO = exameDAO;
+    }
 }

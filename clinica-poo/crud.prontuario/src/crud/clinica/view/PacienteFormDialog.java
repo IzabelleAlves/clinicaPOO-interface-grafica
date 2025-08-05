@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
@@ -26,7 +27,7 @@ public class PacienteFormDialog extends JDialog {
     private JButton btnSair;
 
     private PacienteDAO pacienteDAO;
-    private Paciente paciente; // null se cadastro novo
+    private Paciente paciente;
 
     public PacienteFormDialog(Window parent, IConnection dbConnection, Paciente paciente) {
         super(parent, paciente == null ? "Cadastrar Paciente" : "Editar Paciente", ModalityType.APPLICATION_MODAL);
@@ -111,7 +112,6 @@ public class PacienteFormDialog extends JDialog {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        // Validação mais rigorosa do CPF
         if (nome.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Nome é obrigatório.");
             return;
@@ -132,30 +132,32 @@ public class PacienteFormDialog extends JDialog {
             return;
         }
 
-        if (paciente == null) {
-            try {
-                LocalDate nascimento = LocalDate.parse(dataNascimento, formatter);
+        try {
+            LocalDateTime nascimento = LocalDate.parse(dataNascimento, formatter).atStartOfDay();
+
+            if (paciente == null) {
                 pacienteDAO.create(new Paciente(nome, cpf, nascimento));
                 dispose();
-            } catch (CPFJaExisteException ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "CPF já existe", JOptionPane.WARNING_MESSAGE);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Erro ao salvar paciente.", "Erro", JOptionPane.ERROR_MESSAGE);
+            } else {
+                paciente.setNome(nome);
+                paciente.setCpf(cpf);
+                paciente.setDataNascimento(nascimento);
+                pacienteDAO.update(paciente);
+                dispose();
             }
-        } else {
-            // código para edição (sem alterações)
+        } catch (CPFJaExisteException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "CPF já existe", JOptionPane.WARNING_MESSAGE);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erro ao salvar paciente.", "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
-
-
-
 
     private boolean validarData(String data) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
             sdf.setLenient(false);
-            Date d = sdf.parse(data);
+            sdf.parse(data);
             return true;
         } catch (Exception e) {
             return false;

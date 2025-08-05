@@ -1,127 +1,116 @@
 package crud.clinica.model;
 
-import java.sql.Date;
-import java.time.LocalDate;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class Paciente {
 
-	private Long id;
-	private String nome;
-	private String cpf;
-	private int quantidadeExames;
-	private LocalDate dataNascimento;
+    private Long id;
+    private String nome;
+    private String cpf;
+    private int quantidadeExames;
+    private LocalDateTime dataNascimento;
 
+    private List<Exame> exames = new ArrayList<>();
 
-	
-	private List<Exame> exames = new ArrayList<Exame>();
+    public Paciente() {
+    }
 
-	public Paciente() {
-	}
-	
-	public Paciente(String nome, String cpf, LocalDate dataNascimento) {
-		this.nome = nome;
-		this.cpf = cpf;
-		this.dataNascimento = dataNascimento;
-	}
+    public Paciente(String nome, String cpf, LocalDateTime dataNascimento) {
+        this.nome = nome;
+        this.cpf = cpf;
+        this.dataNascimento = dataNascimento;
+    }
 
-	public Paciente(Long id, String nome, String cpf, Date date) {
-		this.id = id;
-		this.nome = nome;
-		this.cpf = cpf;
-		if (date != null) {
-            this.dataNascimento = date.toLocalDate();
+    public Paciente(Long id, String nome, String cpf, LocalDateTime localDateTime) {
+        this.id = id;
+        this.nome = nome;
+        this.cpf = cpf;
+        if (localDateTime != null) {
+            this.dataNascimento = localDateTime;
         } else {
             this.dataNascimento = null;
         }
-	}
+    }
 
-	public Long getId() {
-		return id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getNome() {
-		return nome;
-	}
+    public String getNome() {
+        return nome;
+    }
 
-	public void setNome(String nome) {
-		this.nome = nome;
-	}
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
 
-	public String getCpf() {
-		return cpf;
-	}
+    public String getCpf() {
+        return cpf;
+    }
 
-	public void setCpf(String cpf) {
-		this.cpf = cpf;
-	}
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
+    }
 
-	public List<Exame> getExames() {
-		return exames;
-	}
+    public List<Exame> getExames() {
+        return exames;
+    }
 
-	public void setExames(List<Exame> exames) {
-		this.exames = exames;
-	}
-	
-	public void setQuantidadeExames(int quantidadeExames) {
-	    this.quantidadeExames = quantidadeExames;
-	}
-	
-	public int getQuantidadeExames() {
-	    return quantidadeExames;
-	}
-	
-	public LocalDate getDataNascimento() {
-	    return dataNascimento;
-	}
+    public void setExames(List<Exame> exames) {
+        this.exames = exames;
+    }
 
-	public void setDataNascimento(Date dataNascimento) {
-	    if (dataNascimento != null) {
-	        this.dataNascimento = dataNascimento.toLocalDate(); // converte para LocalDate
-	    } else {
-	        this.dataNascimento = null;
-	    }
-	}
-	
-	public void setDataNascimento(LocalDate dataNascimento) {
-	    this.dataNascimento = dataNascimento;
-	}
+    public void setQuantidadeExames(int quantidadeExames) {
+        this.quantidadeExames = quantidadeExames;
+    }
 
-	@Override
-	public String toString() {
-	    return "ID: " + id + " - Nome paciente: " + nome + " - CFP: " + cpf + " - Total de exames do paciente: " + quantidadeExames;
-	}
+    public int getQuantidadeExames() {
+        return quantidadeExames;
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(cpf);
-	}
+    public LocalDateTime getDataNascimento() {
+        return dataNascimento;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Paciente other = (Paciente) obj;
-		return Objects.equals(cpf, other.cpf);
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
+    public void setDataNascimento(LocalDateTime dataNascimento) {
+        this.dataNascimento = dataNascimento;
+    }
+
+    public void setDataNascimento(Timestamp timestamp) {
+        if (timestamp != null) {
+            this.dataNascimento = timestamp.toLocalDateTime();
+        } else {
+            this.dataNascimento = null;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "ID: " + id + " - Nome paciente: " + nome + " - CFP: " + cpf + " - Total de exames do paciente: " + quantidadeExames;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(cpf);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Paciente other = (Paciente) obj;
+        return Objects.equals(cpf, other.cpf);
+    }
 }

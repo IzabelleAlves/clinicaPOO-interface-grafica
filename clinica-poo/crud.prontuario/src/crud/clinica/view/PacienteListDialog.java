@@ -76,7 +76,12 @@ public class PacienteListDialog extends JDialog {
 		List<Paciente> pacientes = pacienteDAO.findAll();
 		tableModel.setRowCount(0); // limpa tabela
 		for (Paciente p : pacientes) {
-			tableModel.addRow(new Object[] { p.getId(), p.getNome(), p.getCpf(), p.getDataNascimento() });
+//			tableModel.addRow(new Object[] { p.getId(), p.getNome(), p.getCpf(), p.getDataNascimento() });
+			String dataFormatada = p.getDataNascimento() != null
+				    ? p.getDataNascimento().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+				    : "";
+				tableModel.addRow(new Object[] { p.getId(), p.getNome(), p.getCpf(), dataFormatada });
+
 		}
 	}
 
