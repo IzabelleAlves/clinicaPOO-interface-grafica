@@ -128,6 +128,10 @@ public class MainView extends JFrame {
                 break;
 
             case "Novo Exame":
+                ExameFormDialog novoExame = new ExameFormDialog(this, dbConnection, null);
+                novoExame.setVisible(true);
+                break;
+                
             case "Editar Exame":
             case "Localizar Exame":
             case "Excluir Exame":

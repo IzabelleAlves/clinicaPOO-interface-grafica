@@ -1,92 +1,85 @@
 package crud.clinica.model;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 public class Exame {
 
-	private Long id;
-	private String descricao;
-	private LocalDateTime data_exame;
-	private Paciente paciente;
-	
-	public Exame() {
-		super();
-	}
-	
-	public Exame( String descricao, LocalDateTime data_exame) {
-		super();
-		this.descricao = descricao;
-		this.data_exame = data_exame;
-	}
+    private Long id;
+    private String tipo;
+    private String descricao;
+    private LocalDate data_exame;
+    private Paciente paciente;
 
-	public Exame(Long id, String descricao, LocalDateTime data_exame) {
-		super();
-		this.id = id;
-		this.descricao = descricao;
-		this.data_exame = data_exame;
-	}
+    public Exame() {
+    }
 
-	public Long getId() {
-		return id;
-	}
+    public Exame(Paciente paciente, String tipo, LocalDate data_exame, String descricao) {
+        this.paciente = paciente;
+        this.tipo = tipo;
+        this.data_exame = data_exame;
+        this.descricao = descricao;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public String getDescricao() {
-		return descricao;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setDescricao(String descricao) {
-		this.descricao = descricao;
-	}
+    public String getTipo() {
+        return tipo;
+    }
 
-	public LocalDateTime getData_exame() {
-		return data_exame;
-	}
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
 
-	public void setData_exame(LocalDateTime data_exame) {
-		this.data_exame = data_exame;
-	}
-	
-	public Paciente getPaciente() {
-		return paciente;
-	}
-	
-	public void setPaciente(Paciente paciente) {
-		this.paciente = paciente;
-	}
+    public String getDescricao() {
+        return descricao;
+    }
 
-	@Override
-	public String toString() {
-	    return "Exame ID: " + id +
-	           ", Descrição: " + descricao +
-	           ", Data: " + data_exame +
-	           ", Paciente ID: " + (paciente != null ? paciente.getId() : "null");
-	}
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
 
+    public LocalDate getData_exame() {
+        return data_exame;
+    }
 
+    public void setData_exame(LocalDate data_exame) {
+        this.data_exame = data_exame;
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
+    public Paciente getPaciente() {
+        return paciente;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Exame other = (Exame) obj;
-		return Objects.equals(id, other.id);
-	}
-	
-	
-	
-	
+    public void setPaciente(Paciente paciente) {
+        this.paciente = paciente;
+    }
+
+    @Override
+    public String toString() {
+        return "Exame ID: " + id +
+               ", Tipo: " + tipo +
+               ", Descrição: " + descricao +
+               ", Data: " + data_exame +
+               ", Paciente ID: " + (paciente != null ? paciente.getId() : "null");
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Exame other = (Exame) obj;
+        return Objects.equals(id, other.id);
+    }
 }

@@ -1,4 +1,3 @@
-//Formulário para adicionar/editar exame
 package crud.clinica.view;
 
 import crud.clinica.dao.ExameDAO;
@@ -8,8 +7,12 @@ import crud.clinica.model.Exame;
 import crud.clinica.model.Paciente;
 
 import javax.swing.*;
+import javax.swing.text.MaskFormatter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class ExameFormDialog extends JDialog {
@@ -17,13 +20,15 @@ public class ExameFormDialog extends JDialog {
 
     private JComboBox<Paciente> pacienteComboBox;
     private JComboBox<String> tipoComboBox;
-    private JTextField dataField;
-    private JTextArea observacoesArea;
+    private JFormattedTextField dataField;
+    private JTextArea descricaoArea;
     private JButton btnSalvar, btnCancelar;
 
     private ExameDAO exameDAO;
     private PacienteDAO pacienteDAO;
     private Exame exame;
+
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public ExameFormDialog(JFrame parent, IConnection dbConnection, Exame exame) {
         super(parent, true); // modal
@@ -36,7 +41,6 @@ public class ExameFormDialog extends JDialog {
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
 
-        // Painel de formulário
         JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
 
         formPanel.add(new JLabel("Paciente:"));
@@ -49,17 +53,23 @@ public class ExameFormDialog extends JDialog {
         formPanel.add(tipoComboBox);
 
         formPanel.add(new JLabel("Data (dd/mm/aaaa):"));
-        dataField = new JTextField();
+        try {
+            MaskFormatter dateMask = new MaskFormatter("##/##/####");
+            dateMask.setPlaceholderCharacter('_');
+            dataField = new JFormattedTextField(dateMask);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            dataField = new JFormattedTextField(); // fallback
+        }
         formPanel.add(dataField);
 
-        formPanel.add(new JLabel("Observações:"));
-        observacoesArea = new JTextArea(3, 20);
-        JScrollPane scrollPane = new JScrollPane(observacoesArea);
+        formPanel.add(new JLabel("Descrição:"));
+        descricaoArea = new JTextArea(3, 20);
+        JScrollPane scrollPane = new JScrollPane(descricaoArea);
         formPanel.add(scrollPane);
 
         add(formPanel, BorderLayout.CENTER);
 
-        // Painel de botões
         JPanel buttonPanel = new JPanel();
         btnSalvar = new JButton("Salvar");
         btnCancelar = new JButton("Cancelar");
@@ -68,15 +78,13 @@ public class ExameFormDialog extends JDialog {
 
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // Se for edição, preencher os dados
         if (exame != null) {
             pacienteComboBox.setSelectedItem(exame.getPaciente());
             tipoComboBox.setSelectedItem(exame.getTipo());
-            dataField.setText(exame.getData());
-            observacoesArea.setText(exame.getObservacoes());
+            dataField.setText(exame.getData_exame().format(formatter));
+            descricaoArea.setText(exame.getDescricao());
         }
 
-        // Ações
         btnSalvar.addActionListener(this::salvar);
         btnCancelar.addActionListener(e -> dispose());
     }
@@ -89,26 +97,35 @@ public class ExameFormDialog extends JDialog {
     }
 
     private void salvar(ActionEvent e) {
-        Paciente paciente = (Paciente) pacienteComboBox.getSelectedItem();
-        String tipo = (String) tipoComboBox.getSelectedItem();
-        String data = dataField.getText().trim();
-        String observacoes = observacoesArea.getText().trim();
-
-        if (paciente == null || tipo.isEmpty() || data.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Preencha todos os campos obrigatórios.");
-            return;
-        }
-
         try {
+            Paciente paciente = (Paciente) pacienteComboBox.getSelectedItem();
+            String tipo = (String) tipoComboBox.getSelectedItem();
+            String dataTexto = dataField.getText().trim();
+            String descricao = descricaoArea.getText().trim();
+
+            if (paciente == null || tipo.isEmpty() || dataTexto.contains("_") || dataTexto.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Preencha todos os campos obrigatórios.");
+                return;
+            }
+
+            LocalDate dataExame;
+            try {
+                dataExame = LocalDate.parse(dataTexto, formatter);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Data inválida! Use o formato dd/MM/aaaa.");
+                return;
+            }
+
             if (exame == null) {
-                exameDAO.create(new Exame(paciente, tipo, data, observacoes));
+                exameDAO.create(new Exame(paciente, tipo, dataExame, descricao));
             } else {
                 exame.setPaciente(paciente);
                 exame.setTipo(tipo);
-                exame.setData(data);
-                exame.setObservacoes(observacoes);
+                exame.setData_exame(dataExame);
+                exame.setDescricao(descricao);
                 exameDAO.update(exame);
             }
+
             dispose();
         } catch (Exception ex) {
             ex.printStackTrace();
