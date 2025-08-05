@@ -10,6 +10,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PacienteLocalizacaoDialog extends JDialog {
@@ -81,8 +82,26 @@ public class PacienteLocalizacaoDialog extends JDialog {
         }
     }
 
+//    private void filtrar() {
+//        String termoCpf = buscaField.getText().replaceAll("[^0-9]", "").trim();
+//        modeloTabela.setRowCount(0);
+//
+//        if (termoCpf.isEmpty()) {
+//            carregarTodos();
+//            return;
+//        }
+//
+//        List<Paciente> pacientesEncontrados = (List<Paciente>) pacienteDAO.findByCPF(termoCpf);
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+//
+//        for (Paciente p : pacientesEncontrados) {
+//            String dataFormatada = p.getDataNascimento() != null ? p.getDataNascimento().format(formatter) : "";
+//            modeloTabela.addRow(new Object[]{p.getId(), p.getNome(), p.getCpf(), dataFormatada});
+//        }
+//    }
+    
     private void filtrar() {
-        String termoCpf = buscaField.getText().replaceAll("[^0-9]", "").trim();
+        String termoCpf = buscaField.getText().trim();
         modeloTabela.setRowCount(0);
 
         if (termoCpf.isEmpty()) {
@@ -91,11 +110,15 @@ public class PacienteLocalizacaoDialog extends JDialog {
         }
 
         List<Paciente> pacientesEncontrados = (List<Paciente>) pacienteDAO.findByCPF(termoCpf);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        if (pacientesEncontrados == null) {
+            // Caso o DAO retorne null, inicializa lista vazia para evitar NPE
+            pacientesEncontrados = new ArrayList<>();
+        }
 
         for (Paciente p : pacientesEncontrados) {
-            String dataFormatada = p.getDataNascimento() != null ? p.getDataNascimento().format(formatter) : "";
-            modeloTabela.addRow(new Object[]{p.getId(), p.getNome(), p.getCpf(), dataFormatada});
+            modeloTabela.addRow(new Object[]{p.getId(), p.getNome(), p.getCpf(), p.getDataNascimento()});
         }
     }
+
 }
