@@ -1,5 +1,6 @@
 package crud.clinica.model;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +12,7 @@ public class Paciente {
 	private String nome;
 	private String cpf;
 	private int quantidadeExames;
-	private String dataNascimento;
+	private LocalDate dataNascimento;
 
 
 	
@@ -20,16 +21,21 @@ public class Paciente {
 	public Paciente() {
 	}
 	
-	public Paciente(String nome, String cpf, String dataNascimento) {
+	public Paciente(String nome, String cpf, LocalDate dataNascimento) {
 		this.nome = nome;
 		this.cpf = cpf;
 		this.dataNascimento = dataNascimento;
 	}
 
-	public Paciente(Long id, String nome, String cpf) {
+	public Paciente(Long id, String nome, String cpf, Date date) {
 		this.id = id;
 		this.nome = nome;
 		this.cpf = cpf;
+		if (date != null) {
+            this.dataNascimento = date.toLocalDate();
+        } else {
+            this.dataNascimento = null;
+        }
 	}
 
 	public Long getId() {
@@ -72,11 +78,19 @@ public class Paciente {
 	    return quantidadeExames;
 	}
 	
-	public String getDataNascimento() {
+	public LocalDate getDataNascimento() {
 	    return dataNascimento;
 	}
 
-	public void setDataNascimento(String dataNascimento) {
+	public void setDataNascimento(Date dataNascimento) {
+	    if (dataNascimento != null) {
+	        this.dataNascimento = dataNascimento.toLocalDate(); // converte para LocalDate
+	    } else {
+	        this.dataNascimento = null;
+	    }
+	}
+	
+	public void setDataNascimento(LocalDate dataNascimento) {
 	    this.dataNascimento = dataNascimento;
 	}
 

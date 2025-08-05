@@ -11,6 +11,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class PacienteFormDialog extends JDialog {
@@ -27,7 +29,7 @@ public class PacienteFormDialog extends JDialog {
     private Paciente paciente; // null se cadastro novo
 
     public PacienteFormDialog(Window parent, IConnection dbConnection, Paciente paciente) {
-        super(parent, "Cadastrar Paciente", ModalityType.APPLICATION_MODAL);
+        super(parent, paciente == null ? "Cadastrar Paciente" : "Editar Paciente", ModalityType.APPLICATION_MODAL);
         this.pacienteDAO = new PacienteDAO(dbConnection);
         this.paciente = paciente;
 
@@ -63,41 +65,36 @@ public class PacienteFormDialog extends JDialog {
 
         add(formPanel, BorderLayout.CENTER);
 
-//        JPanel buttonPanel = new JPanel();
-//        btnSalvar = new JButton("Salvar");
-//        btnLimpar = new JButton("Limpar");
-//        btnSair = new JButton("Sair");
-//        buttonPanel.add(btnSalvar);
-//        buttonPanel.add(btnLimpar);
-//        buttonPanel.add(btnSair);
-        
         JPanel buttonPanel = new JPanel();
 
         btnSalvar = new JButton(paciente == null ? "Salvar" : "Atualizar");
-        btnSalvar.addActionListener(this::salvar);
         buttonPanel.add(btnSalvar);
 
         if (paciente == null) {
             btnLimpar = new JButton("Limpar");
-            btnLimpar.addActionListener(e -> limparCampos());
             buttonPanel.add(btnLimpar);
         }
 
         btnSair = new JButton("Sair");
-        btnSair.addActionListener(e -> dispose());
         buttonPanel.add(btnSair);
-
 
         add(buttonPanel, BorderLayout.SOUTH);
 
         btnSalvar.addActionListener(this::salvar);
-//        btnLimpar.addActionListener(e -> limparCampos());
+
+        if (btnLimpar != null) {
+            btnLimpar.addActionListener(e -> limparCampos());
+        }
+
         btnSair.addActionListener(e -> dispose());
-        
+
         if (paciente != null) {
             nomeField.setText(paciente.getNome());
             cpfField.setText(paciente.getCpf());
-            dataNascimentoField.setText(paciente.getDataNascimento());
+            if (paciente.getDataNascimento() != null) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                dataNascimentoField.setText(paciente.getDataNascimento().format(formatter));
+            }
         }
     }
 
@@ -112,21 +109,23 @@ public class PacienteFormDialog extends JDialog {
         String cpf = cpfField.getText().trim();
         String dataNascimento = dataNascimentoField.getText().trim();
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
         if (paciente == null) {
-            // Valida campos obrigatórios no cadastro novo
+            // Cadastro novo: todos os campos são obrigatórios
             if (nome.isEmpty() || cpf.isEmpty() || dataNascimento.isEmpty() || dataNascimento.contains("_")) {
                 JOptionPane.showMessageDialog(this, "Preencha todos os campos obrigatórios.");
                 return;
             }
 
-            // Valida data obrigatoriamente
             if (!validarData(dataNascimento)) {
                 JOptionPane.showMessageDialog(this, "Data de Nascimento inválida. Use formato DD/MM/AAAA.");
                 return;
             }
 
             try {
-                pacienteDAO.create(new Paciente(nome, cpf, dataNascimento));
+                LocalDate nascimento = LocalDate.parse(dataNascimento, formatter);
+                pacienteDAO.create(new Paciente(nome, cpf, nascimento));
                 dispose();
             } catch (CPFJaExisteException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "CPF já existe", JOptionPane.WARNING_MESSAGE);
@@ -135,7 +134,7 @@ public class PacienteFormDialog extends JDialog {
                 JOptionPane.showMessageDialog(this, "Erro ao salvar paciente.", "Erro", JOptionPane.ERROR_MESSAGE);
             }
         } else {
-            // Edição: só atualiza os campos que foram preenchidos, sem exigir obrigatoriedade
+            // Edição: atualiza apenas os campos preenchidos
             if (!nome.isEmpty()) {
                 paciente.setNome(nome);
             }
@@ -147,8 +146,9 @@ public class PacienteFormDialog extends JDialog {
                     JOptionPane.showMessageDialog(this, "Data de Nascimento inválida. Use formato DD/MM/AAAA.");
                     return;
                 }
-                paciente.setDataNascimento(dataNascimento);
+                paciente.setDataNascimento(LocalDate.parse(dataNascimento, formatter));
             }
+
             try {
                 pacienteDAO.update(paciente);
                 dispose();

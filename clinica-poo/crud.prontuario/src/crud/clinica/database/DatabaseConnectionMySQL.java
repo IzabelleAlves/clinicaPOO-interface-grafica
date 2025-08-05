@@ -50,20 +50,20 @@ public class DatabaseConnectionMySQL implements IConnection {
                         id BIGINT PRIMARY KEY AUTO_INCREMENT,
                         nome VARCHAR(255) NOT NULL,
                         cpf VARCHAR(14) NOT NULL UNIQUE,
-                        data_nascimento VARCHAR(10) NOT NULL
+                        data_nascimento DATE NOT NULL
                     )
                 """;
                 stmt.executeUpdate(sqlPacientes);
 
                 String sqlExames = """
-                    CREATE TABLE IF NOT EXISTS exames (
-                        id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                        descricao VARCHAR(255) NOT NULL,
-                        data_exame DATETIME NOT NULL,
-                        paciente_id BIGINT,
-                        FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
-                    )
-                """;
+                	    CREATE TABLE IF NOT EXISTS exames (
+                	        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                	        descricao VARCHAR(255) NOT NULL,
+                	        data_exame DATETIME NOT NULL,
+                	        paciente_id BIGINT NOT NULL,
+                	        FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
+                	    )
+                	""";
                 stmt.executeUpdate(sqlExames);
             }
 

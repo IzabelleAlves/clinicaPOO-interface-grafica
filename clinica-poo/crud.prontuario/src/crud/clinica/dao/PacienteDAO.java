@@ -1,10 +1,13 @@
 package crud.clinica.dao;
 
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.sun.jdi.connect.spi.Connection;
 
 import crud.clinica.database.IConnection;
 import crud.clinica.exception.CPFJaExisteException;
@@ -28,12 +31,15 @@ public class PacienteDAO implements IEntityDAO<Paciente>{
 	    if (findByCPF(t.getCpf()) != null) {
 	        throw new CPFJaExisteException("Já existe um paciente com o CPF informado. Digite outro CPF.");
 	    }
+	    
+	    Date dataNascimento = Date.valueOf(t.getDataNascimento());
+	    
 	    try {
 	        PreparedStatement pstm = conn.getConnection()
 	            .prepareStatement("INSERT INTO PACIENTES (nome, cpf, data_nascimento) VALUES (?, ?, ?);");
 	        pstm.setString(1, t.getNome());
 	        pstm.setString(2, t.getCpf());
-	        pstm.setString(3, t.getDataNascimento());
+	        pstm.setDate(3, dataNascimento);
 	        pstm.execute();
 	        pstm.close();
 	    } catch (SQLException e) {
@@ -54,7 +60,7 @@ public class PacienteDAO implements IEntityDAO<Paciente>{
 	        ResultSet rs = pstm.executeQuery();
 
 	        if (rs.next()) {
-	            p = new Paciente(rs.getLong("id"), rs.getString("nome"), rs.getString("cpf"));
+	            p = new Paciente(rs.getLong("id"), rs.getString("nome"), rs.getString("cpf") , rs.getDate("data_nascimento"));
 
 	            List<Exame> examesDoPaciente = exameDAO.findByPacienteId(p.getId());
 	            p.setExames(examesDoPaciente);
@@ -69,22 +75,76 @@ public class PacienteDAO implements IEntityDAO<Paciente>{
 	}
 
 
+//	public Paciente findByCPF(String cpf) {
+//	    try (PreparedStatement pstm = conn.getConnection().prepareStatement("SELECT * FROM PACIENTES WHERE cpf = ?")) {
+//	        pstm.setString(1, cpf);
+//	        try (ResultSet rs = pstm.executeQuery()) {
+//	            if (rs.next()) {
+//	                Paciente paciente = new Paciente();
+//	                paciente.setId(rs.getLong("id"));
+//	                paciente.setNome(rs.getString("nome"));
+//	                paciente.setCpf(rs.getString("cpf"));
+//	                return paciente;
+//	            }
+//	        }
+//	    } catch (SQLException e) {
+//	        e.printStackTrace();
+//	    }
+//	    return null;
+//	}
+	
+//	public List<Paciente> findByCPF(String cpf) {
+//	    List<Paciente> lista = new ArrayList<>();
+//	    String sql = "SELECT * FROM PACIENTES WHERE cpf LIKE ?";
+//
+//	    try (PreparedStatement pstm = conn.getConnection().prepareStatement(sql)) {
+//	        pstm.setString(1, cpf + "%");
+//
+//	        try (ResultSet rs = pstm.executeQuery()) {
+//	            while (rs.next()) {
+//	                Paciente paciente = new Paciente();
+//	                paciente.setId(rs.getLong("id"));
+//	                paciente.setNome(rs.getString("nome"));
+//	                paciente.setCpf(rs.getString("cpf"));
+//	                paciente.setDataNascimento(rs.getDate("data_nascimento").toLocalDate());
+//
+//	                int qtdExames = exameDAO.countByPacienteId(paciente.getId());
+//	                paciente.setQuantidadeExames(qtdExames);
+//
+//	                lista.add(paciente);
+//	            }
+//	        }
+//	    } catch (SQLException e) {
+//	        e.printStackTrace();
+//	    }
+//
+//	    return lista;
+//	}
+	
 	public Paciente findByCPF(String cpf) {
-	    try (PreparedStatement pstm = conn.getConnection().prepareStatement("SELECT * FROM PACIENTES WHERE cpf = ?")) {
+	    Paciente paciente = null;
+	    String sql = "SELECT * FROM PACIENTES WHERE cpf = ?";
+
+	    try (PreparedStatement pstm = conn.getConnection().prepareStatement(sql)) {
 	        pstm.setString(1, cpf);
+
 	        try (ResultSet rs = pstm.executeQuery()) {
 	            if (rs.next()) {
-	                Paciente paciente = new Paciente();
+	                paciente = new Paciente();
 	                paciente.setId(rs.getLong("id"));
 	                paciente.setNome(rs.getString("nome"));
 	                paciente.setCpf(rs.getString("cpf"));
-	                return paciente;
+	                paciente.setDataNascimento(rs.getDate("data_nascimento") != null ? rs.getDate("data_nascimento").toLocalDate() : null);
+
+	                int qtdExames = exameDAO.countByPacienteId(paciente.getId());
+	                paciente.setQuantidadeExames(qtdExames);
 	            }
 	        }
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
-	    return null;
+
+	    return paciente;
 	}
 
 
@@ -113,12 +173,12 @@ public class PacienteDAO implements IEntityDAO<Paciente>{
 		        ResultSet rs = pstm.executeQuery();
 
 		        while (rs.next()) {
-		            Paciente p = new Paciente(rs.getLong("id"), rs.getString("nome"), rs.getString("cpf"));
+		            Paciente p = new Paciente(rs.getLong("id"), rs.getString("nome"), rs.getString("cpf"), rs.getDate("data_nascimento"));
 
 		            int totalExames = exameDAO.countByPacienteId(p.getId());
 
 		            p.setQuantidadeExames(totalExames);
-		            p.setDataNascimento(rs.getString("data_nascimento"));
+//		            p.setDataNascimento(rs.getDate("data_nascimento"));
 		            pacientes.add(p);
 		        }
 
@@ -136,22 +196,40 @@ public class PacienteDAO implements IEntityDAO<Paciente>{
 
 
 
+//	@Override
+//	public void update(Paciente t) throws SQLException, CPFJaExisteException {
+//		List<Paciente> pacienteExistente = findByCPF(t.getCpf());
+//		
+//		if (pacienteExistente != null && !((Exame) pacienteExistente).getId().equals(t.getId())) {
+//	        throw new CPFJaExisteException("Já existe um paciente com o CPF informado. Digite outro CPF");
+//	    }
+//		
+//	    PreparedStatement pstm = conn.getConnection()
+//	        .prepareStatement("UPDATE PACIENTES SET NOME = ?, CPF = ? WHERE ID = ?;");
+//	    pstm.setString(1, t.getNome());
+//	    pstm.setString(2, t.getCpf());
+//	    pstm.setLong(3, t.getId());
+//	    pstm.execute();
+//	    pstm.close();
+//	}
+	
 	@Override
 	public void update(Paciente t) throws SQLException, CPFJaExisteException {
 		Paciente pacienteExistente = findByCPF(t.getCpf());
-		
+
 		if (pacienteExistente != null && !pacienteExistente.getId().equals(t.getId())) {
-	        throw new CPFJaExisteException("Já existe um paciente com o CPF informado. Digite outro CPF");
-	    }
-		
+		    throw new CPFJaExisteException("Já existe um paciente com o CPF informado. Digite outro CPF");
+		}
 	    PreparedStatement pstm = conn.getConnection()
-	        .prepareStatement("UPDATE PACIENTES SET NOME = ?, CPF = ? WHERE ID = ?;");
+	        .prepareStatement("UPDATE PACIENTES SET NOME = ?, CPF = ?, data_nascimento = ? WHERE ID = ?;");
 	    pstm.setString(1, t.getNome());
 	    pstm.setString(2, t.getCpf());
-	    pstm.setLong(3, t.getId());
+	    pstm.setDate(3, java.sql.Date.valueOf(t.getDataNascimento()));
+	    pstm.setLong(4, t.getId());
 	    pstm.execute();
 	    pstm.close();
 	}
+
 
 
 	public ExameDAO getExameDAO() {
