@@ -1,11 +1,17 @@
 package crud.clinica.view;
 
 import crud.clinica.database.DatabaseConnectionMySQL;
+import crud.clinica.dao.ExameDAO;
+import crud.clinica.dao.PacienteDAO;
+import crud.clinica.view.ExameEdicaoDialog;
+
 import crud.clinica.database.IConnection;
+import crud.clinica.model.Exame;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import crud.clinica.view.ExameListDialog;
 
 public class MainView extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -128,14 +134,39 @@ public class MainView extends JFrame {
                 break;
 
             case "Novo Exame":
-                ExameFormDialog novoExame = new ExameFormDialog(this, dbConnection, null);
+                ExameDAO exameDAO = new ExameDAO(dbConnection);
+                PacienteDAO pacienteDAO = new PacienteDAO(dbConnection);
+                ExameFormDialog novoExame = new ExameFormDialog(this, exameDAO, pacienteDAO, null);
                 novoExame.setVisible(true);
                 break;
-                
+
             case "Editar Exame":
+                ExameListDialog listaExames = new ExameListDialog(this, dbConnection, true, false);
+                listaExames.setVisible(true);
+                break;
+                
             case "Localizar Exame":
+                ExameDAO exameDAO2 = new ExameDAO(dbConnection);
+                PacienteDAO pacienteDAO2 = new PacienteDAO(dbConnection);
+                ExameLocalizacaoDialog localizarExameLoc = new ExameLocalizacaoDialog(
+                    this,
+                    exameDAO2,
+                    pacienteDAO2
+                );
+                localizarExameLoc.setVisible(true);
+                break;
+                
+            case "Listar Exames":
+//                ExameDAO exameDAO3 = new ExameDAO(dbConnection);
+//                PacienteDAO pacienteDAO3 = new PacienteDAO(dbConnection);
+                ExameListDialog listaExames3 = new ExameListDialog(this, dbConnection, false, false);
+                listaExames3.setVisible(true);
+                break;
+
+                
             case "Excluir Exame":
-                JOptionPane.showMessageDialog(this, "Funcionalidade de exames ainda não implementada");
+                ExameListDialog listaExamesExcluir = new ExameListDialog(this, dbConnection, false, true); // só excluir habilitado
+                listaExamesExcluir.setVisible(true);
                 break;
 
             default:

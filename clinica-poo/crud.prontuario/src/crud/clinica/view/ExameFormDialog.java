@@ -2,7 +2,6 @@ package crud.clinica.view;
 
 import crud.clinica.dao.ExameDAO;
 import crud.clinica.dao.PacienteDAO;
-import crud.clinica.database.IConnection;
 import crud.clinica.model.Exame;
 import crud.clinica.model.Paciente;
 
@@ -13,123 +12,132 @@ import java.awt.event.ActionEvent;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 public class ExameFormDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
     private JComboBox<Paciente> pacienteComboBox;
-    private JComboBox<String> tipoComboBox;
     private JFormattedTextField dataField;
-    private JTextArea descricaoArea;
-    private JButton btnSalvar, btnCancelar;
+    private JTextField descricaoField;
+
+    private JButton btnSalvar;
+    private JButton btnLimpar;
+    private JButton btnSair;
 
     private ExameDAO exameDAO;
     private PacienteDAO pacienteDAO;
     private Exame exame;
 
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-    public ExameFormDialog(JFrame parent, IConnection dbConnection, Exame exame) {
-        super(parent, true); // modal
+    public ExameFormDialog(Window parent, ExameDAO exameDAO, PacienteDAO pacienteDAO, Exame exame) {
+        super(parent, exame == null ? "Cadastrar Exame" : "Editar Exame", ModalityType.APPLICATION_MODAL);
+        this.exameDAO = exameDAO;
+        this.pacienteDAO = pacienteDAO;
         this.exame = exame;
-        this.exameDAO = new ExameDAO(dbConnection);
-        this.pacienteDAO = new PacienteDAO(dbConnection);
 
-        setTitle(exame == null ? "Cadastrar Exame" : "Editar Exame");
-        setSize(400, 300);
+        setSize(350, 220);
+        setLayout(new BorderLayout(10, 10));
         setLocationRelativeTo(parent);
-        setLayout(new BorderLayout());
+        setResizable(false);
 
-        JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+        // === FORM PANEL com GridLayout(3,2) ===
+        JPanel formPanel = new JPanel(new GridLayout(3, 2, 5, 5));
 
+        // Campo Paciente
         formPanel.add(new JLabel("Paciente:"));
         pacienteComboBox = new JComboBox<>();
-        carregarPacientes();
+        for (Paciente p : pacienteDAO.findAll()) {
+            pacienteComboBox.addItem(p);
+        }
         formPanel.add(pacienteComboBox);
 
-        formPanel.add(new JLabel("Tipo de Exame:"));
-        tipoComboBox = new JComboBox<>(new String[]{"Sangue", "Urina", "Raio-X", "Outro"});
-        formPanel.add(tipoComboBox);
-
-        formPanel.add(new JLabel("Data (dd/mm/aaaa):"));
+        // Campo Data
+        formPanel.add(new JLabel("Data (DD/MM/AAAA):"));
         try {
-            MaskFormatter dateMask = new MaskFormatter("##/##/####");
-            dateMask.setPlaceholderCharacter('_');
-            dataField = new JFormattedTextField(dateMask);
+            MaskFormatter dataMask = new MaskFormatter("##/##/####");
+            dataMask.setPlaceholderCharacter('_');
+            dataField = new JFormattedTextField(dataMask);
         } catch (ParseException e) {
-            e.printStackTrace();
-            dataField = new JFormattedTextField(); // fallback
+            dataField = new JFormattedTextField();
         }
         formPanel.add(dataField);
 
+        // Campo Descrição
         formPanel.add(new JLabel("Descrição:"));
-        descricaoArea = new JTextArea(3, 20);
-        JScrollPane scrollPane = new JScrollPane(descricaoArea);
-        formPanel.add(scrollPane);
+        descricaoField = new JTextField();
+        formPanel.add(descricaoField);
 
         add(formPanel, BorderLayout.CENTER);
 
+        // === BOTÕES no painel inferior ===
         JPanel buttonPanel = new JPanel();
-        btnSalvar = new JButton("Salvar");
-        btnCancelar = new JButton("Cancelar");
+
+        btnSalvar = new JButton(exame == null ? "Salvar" : "Atualizar");
         buttonPanel.add(btnSalvar);
-        buttonPanel.add(btnCancelar);
+
+        if (exame == null) {
+            btnLimpar = new JButton("Limpar");
+            buttonPanel.add(btnLimpar);
+        }
+
+        btnSair = new JButton("Sair");
+        buttonPanel.add(btnSair);
 
         add(buttonPanel, BorderLayout.SOUTH);
 
+        // === AÇÕES DOS BOTÕES ===
+        btnSalvar.addActionListener(this::salvar);
+
+        if (btnLimpar != null) {
+            btnLimpar.addActionListener(e -> limparCampos());
+        }
+
+        btnSair.addActionListener(e -> dispose());
+
+        // === PRÉ-PREENCHIMENTO se for edição ===
         if (exame != null) {
             pacienteComboBox.setSelectedItem(exame.getPaciente());
-            tipoComboBox.setSelectedItem(exame.getTipo());
-            dataField.setText(exame.getData_exame().format(formatter));
-            descricaoArea.setText(exame.getDescricao());
-        }
 
-        btnSalvar.addActionListener(this::salvar);
-        btnCancelar.addActionListener(e -> dispose());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            dataField.setText(exame.getData_exame().format(formatter));
+
+            descricaoField.setText(exame.getDescricao());
+        }
     }
 
-    private void carregarPacientes() {
-        List<Paciente> pacientes = pacienteDAO.findAll();
-        for (Paciente p : pacientes) {
-            pacienteComboBox.addItem(p);
-        }
+    private void limparCampos() {
+        pacienteComboBox.setSelectedIndex(0);
+        dataField.setValue(null);
+        descricaoField.setText("");
     }
 
     private void salvar(ActionEvent e) {
+        Paciente paciente = (Paciente) pacienteComboBox.getSelectedItem();
+        String dataStr = dataField.getText().trim();
+        String descricao = descricaoField.getText().trim();
+
+        if (paciente == null || dataStr.isEmpty() || descricao.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Preencha todos os campos.");
+            return;
+        }
+
         try {
-            Paciente paciente = (Paciente) pacienteComboBox.getSelectedItem();
-            String tipo = (String) tipoComboBox.getSelectedItem();
-            String dataTexto = dataField.getText().trim();
-            String descricao = descricaoArea.getText().trim();
-
-            if (paciente == null || tipo.isEmpty() || dataTexto.contains("_") || dataTexto.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Preencha todos os campos obrigatórios.");
-                return;
-            }
-
-            LocalDate dataExame;
-            try {
-                dataExame = LocalDate.parse(dataTexto, formatter);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Data inválida! Use o formato dd/MM/aaaa.");
-                return;
-            }
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            LocalDate data = LocalDate.parse(dataStr, formatter);
 
             if (exame == null) {
-                exameDAO.create(new Exame(paciente, tipo, dataExame, descricao));
+                Exame novoExame = new Exame(descricao, data);
+                novoExame.setPaciente(paciente);
+                exameDAO.create(novoExame);
             } else {
-                exame.setPaciente(paciente);
-                exame.setTipo(tipo);
-                exame.setData_exame(dataExame);
                 exame.setDescricao(descricao);
+                exame.setData_exame(data);
+                exame.setPaciente(paciente);
                 exameDAO.update(exame);
             }
-
+            JOptionPane.showMessageDialog(this, "Exame salvo com sucesso.");
             dispose();
         } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erro ao salvar exame.", "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao salvar exame: " + ex.getMessage());
         }
     }
 }
